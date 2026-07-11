@@ -4,85 +4,66 @@ import { useBooking } from '../context/BookingContext';
 import { Header } from '../components/layout/Header';
 import { Footer } from '../components/layout/Footer';
 import { mockSpecialties, mockServices, mockRooms, mockTimeSlots } from '../services/mockData';
-import { Stethoscope, User, CheckSquare, Wallet, ArrowRight, Building, Calendar, Clock, UserCheck } from 'lucide-react';
+import { Stethoscope, User, CheckSquare, ArrowRight } from 'lucide-react';
 
 export const BookingForm: React.FC = () => {
   const { bookingState, setConsultation, setPatient } = useBooking();
   const navigate = useNavigate();
   const clinic = bookingState.selectedClinic;
 
-  // Sửa lỗi: Đưa useEffect ra ngoài điều kiện render để tuân thủ quy tắc React
+  // Lấy ngày hiện tại để làm giới hạn cho ngày sinh (YYYY-MM-DD)
+  const today = new Date().toISOString().split('T')[0];
+
   useEffect(() => {
     if (!clinic) {
       navigate('/clinics');
     }
   }, [clinic, navigate]);
 
-  // Nếu không có clinic, không render nội dung chính
   if (!clinic) return null;
 
-  // Multi-step local state
   const [currentStep, setCurrentStep] = useState<1 | 2 | 3>(1);
 
-  // Form Fields - Step 1: Consultation Details
-  const [specialty, setSpecialty] = useState(bookingState.specialty || mockSpecialties[0]);
-  const [serviceIndex, setServiceIndex] = useState(1); 
-  const [room, setRoom] = useState(bookingState.room || mockRooms[1]); 
-  const [selectedDate, setSelectedDate] = useState('03/07/2026'); 
-  const [selectedTimeSlot, setSelectedTimeSlot] = useState('09:30 - 10:30'); 
+  // Logic tự động tạo 7 ngày bắt đầu từ hôm nay
+  const dates = Array.from({ length: 7 }, (_, i) => {
+    const d = new Date();
+    d.setDate(d.getDate() + i);
+    const label = `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}`;
+    const dateStr = `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}/${d.getFullYear()}`;
+    const dayNames = ['Chủ Nhật', 'Thứ 2', 'Thứ 3', 'Thứ 4', 'Thứ 5', 'Thứ 6', 'Thứ 7'];
+    const dayOfWeek = i === 0 ? 'Hôm nay' : dayNames[d.getDay()];
+    return { dayOfWeek, dateStr, label };
+  });
 
-  // Form Fields - Step 2: Patient Info
-  const [patientName, setPatientName] = useState(bookingState.patientInfo?.name || 'Nguyễn Văn An');
-  const [patientDob, setPatientDob] = useState(bookingState.patientInfo?.dob || '1990-03-15');
-  const [patientGender, setPatientGender] = useState(bookingState.patientInfo?.gender || 'Nam');
+  const [specialty, setSpecialty] = useState(bookingState.specialty || mockSpecialties[0]);
+  const [serviceIndex, setServiceIndex] = useState(1);
+  const [room, setRoom] = useState(bookingState.room || mockRooms[1]);
+  const [selectedDate, setSelectedDate] = useState(new Date().toLocaleDateString('vi-GB'));
+  const [selectedTimeSlot, setSelectedTimeSlot] = useState(mockTimeSlots[0]);
+
+  const [patientName, setPatientName] = useState('');
+  const [patientDob, setPatientDob] = useState('');
+  const [patientGender, setPatientGender] = useState('');
 
   const selectedService = mockServices[serviceIndex];
 
-  const dates = [
-    { dayOfWeek: 'Thứ 2', dateStr: '02/07/2026', label: '02/07' },
-    { dayOfWeek: 'Thứ 3', dateStr: '03/07/2026', label: '03/07' },
-    { dayOfWeek: 'Thứ 4', dateStr: '04/07/2026', label: '04/07' },
-    { dayOfWeek: 'Thứ 5', dateStr: '05/07/2026', label: '05/07' },
-    { dayOfWeek: 'Thứ 6', dateStr: '06/07/2026', label: '06/07' },
-    { dayOfWeek: 'Thứ 7', dateStr: '07/07/2026', label: '07/07' },
-    { dayOfWeek: 'Chủ Nhật', dateStr: '08/07/2026', label: '08/07' },
-  ];
-
   const handleStep1Submit = (e: React.FormEvent) => {
     e.preventDefault();
-    setConsultation({
-      specialty,
-      service: selectedService,
-      room,
-      date: selectedDate,
-      timeSlot: selectedTimeSlot,
-    });
+    setConsultation({ specialty, service: selectedService, room, date: selectedDate, timeSlot: selectedTimeSlot });
     setCurrentStep(2);
   };
 
   const handleStep2Submit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!patientName.trim() || !patientDob || !patientGender) {
-      alert('Vui lòng nhập đầy đủ thông tin bệnh nhân!');
-      return;
-    }
-    setPatient({
-      name: patientName,
-      dob: patientDob,
-      gender: patientGender,
-    });
+    setPatient({ name: patientName, dob: patientDob, gender: patientGender });
     setCurrentStep(3);
   };
 
-  const handleConfirm = () => {
-    navigate('/payment');
-  };
+  const handleConfirm = () => navigate('/payment');
 
   return (
     <div className="min-h-screen flex flex-col bg-gray-50">
       <Header />
-
-      {/* Breadcrumbs */}
       <nav className="bg-white border-b border-gray-200 py-3 shadow-xs">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-xs font-semibold text-gray-500 flex items-center gap-2">
           <span className="hover:text-medical cursor-pointer" onClick={() => navigate('/')}>Trang chủ</span>
@@ -93,13 +74,10 @@ export const BookingForm: React.FC = () => {
         </div>
       </nav>
 
-      {/* Main content grid */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 flex-grow w-full grid grid-cols-1 lg:grid-cols-3 gap-8">
-        
-        {/* Left Column: Clinic summary Card */}
         <div className="lg:col-span-1">
           <div className="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm sticky top-6">
-            <h3 className="text-sm font-bold text-gray-400 uppercase tracking-wider mb-4">Cơ sở y tế đã chọn</h3>
+            <h3 className="text-sm font-bold text-gray-400 uppercase tracking-wider mb-4">Cơ sở y tế</h3>
             <div className="flex items-start gap-4 mb-4">
               <div className={`h-14 w-14 rounded-xl flex items-center justify-center font-bold text-lg select-none shrink-0 ${clinic.imagePlaceholderColor}`}>
                 {clinic.name.charAt(0)}
@@ -109,58 +87,23 @@ export const BookingForm: React.FC = () => {
                 <p className="text-xs text-gray-500 mt-1 leading-normal">{clinic.address}</p>
               </div>
             </div>
-
-            {currentStep > 1 && (
-              <div className="border-t border-gray-100 pt-4 mt-4 space-y-3 text-sm">
-                <h4 className="font-bold text-gray-700">Thông tin lịch khám:</h4>
-                <div className="flex gap-2 text-gray-600">
-                  <Stethoscope size={16} className="mt-0.5 shrink-0 text-medical" />
-                  <span>{specialty} - {selectedService.name}</span>
-                </div>
-                <div className="flex gap-2 text-gray-600">
-                  <Calendar size={16} className="mt-0.5 shrink-0 text-medical" />
-                  <span>{selectedDate}</span>
-                </div>
-                <div className="flex gap-2 text-gray-600">
-                  <Clock size={16} className="mt-0.5 shrink-0 text-medical" />
-                  <span>{selectedTimeSlot} ({room})</span>
-                </div>
-              </div>
-            )}
-
-            {currentStep === 3 && (
-              <div className="border-t border-gray-100 pt-4 mt-4 space-y-3 text-sm">
-                <h4 className="font-bold text-gray-700">Bệnh nhân:</h4>
-                <div className="flex gap-2 text-gray-600">
-                  <UserCheck size={16} className="mt-0.5 shrink-0 text-medical" />
-                  <span>{patientName} ({patientGender}) - Sinh năm {new Date(patientDob).getFullYear()}</span>
-                </div>
-              </div>
-            )}
           </div>
         </div>
 
-        {/* Right Column: 4-Step Stepper & main form */}
         <div className="lg:col-span-2 space-y-6">
           <div className="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm flex justify-between items-center text-xs md:text-sm font-semibold select-none">
-            <div className={`flex flex-col md:flex-row items-center gap-2 ${currentStep >= 1 ? 'text-medical' : 'text-gray-400'}`}>
-              <div className={`h-8 w-8 rounded-full flex items-center justify-center font-bold text-white shadow-sm ${currentStep >= 1 ? 'bg-medical' : 'bg-gray-300'}`}>
-                <Stethoscope size={16} />
-              </div>
-              <span>Thông tin khám</span>
+            <div className={`flex items-center gap-2 ${currentStep >= 1 ? 'text-medical' : 'text-gray-400'}`}>
+              <div className={`h-8 w-8 rounded-full flex items-center justify-center font-bold text-white shadow-sm ${currentStep >= 1 ? 'bg-medical' : 'bg-gray-300'}`}><Stethoscope size={16} /></div>
+              <span>Thông tin</span>
             </div>
             <div className="h-0.5 bg-gray-200 flex-grow mx-2"></div>
-            <div className={`flex flex-col md:flex-row items-center gap-2 ${currentStep >= 2 ? 'text-medical' : 'text-gray-400'}`}>
-              <div className={`h-8 w-8 rounded-full flex items-center justify-center font-bold text-white shadow-sm ${currentStep >= 2 ? 'bg-medical' : 'bg-gray-300'}`}>
-                <User size={16} />
-              </div>
-              <span>Hồ sơ bệnh nhân</span>
+            <div className={`flex items-center gap-2 ${currentStep >= 2 ? 'text-medical' : 'text-gray-400'}`}>
+              <div className={`h-8 w-8 rounded-full flex items-center justify-center font-bold text-white shadow-sm ${currentStep >= 2 ? 'bg-medical' : 'bg-gray-300'}`}><User size={16} /></div>
+              <span>Bệnh nhân</span>
             </div>
             <div className="h-0.5 bg-gray-200 flex-grow mx-2"></div>
-            <div className={`flex flex-col md:flex-row items-center gap-2 ${currentStep >= 3 ? 'text-medical' : 'text-gray-400'}`}>
-              <div className={`h-8 w-8 rounded-full flex items-center justify-center font-bold text-white shadow-sm ${currentStep >= 3 ? 'bg-medical' : 'bg-gray-300'}`}>
-                <CheckSquare size={16} />
-              </div>
+            <div className={`flex items-center gap-2 ${currentStep >= 3 ? 'text-medical' : 'text-gray-400'}`}>
+              <div className={`h-8 w-8 rounded-full flex items-center justify-center font-bold text-white shadow-sm ${currentStep >= 3 ? 'bg-medical' : 'bg-gray-300'}`}><CheckSquare size={16} /></div>
               <span>Xác nhận</span>
             </div>
           </div>
@@ -168,122 +111,82 @@ export const BookingForm: React.FC = () => {
           <div className="bg-white rounded-2xl border border-gray-100 p-6 md:p-8 shadow-sm">
             {currentStep === 1 && (
               <form onSubmit={handleStep1Submit} className="space-y-6">
-                <h3 className="text-xl font-extrabold text-gray-900 border-b border-gray-100 pb-3">Chọn thông tin đăng ký khám</h3>
-                
+                <h3 className="text-xl font-extrabold text-gray-900 border-b border-gray-100 pb-3">Chọn thông tin khám</h3>
                 <div className="space-y-2">
                   <label className="block text-sm font-bold text-gray-700">Chuyên khoa</label>
-                  <select value={specialty} onChange={(e) => setSpecialty(e.target.value)} className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:border-medical focus:ring-2 focus:ring-medical/20 focus:outline-none font-medium text-sm shadow-sm">
+                  <select value={specialty} onChange={(e) => setSpecialty(e.target.value)} className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:border-medical outline-none text-sm font-medium">
                     {mockSpecialties.map((s, idx) => (<option key={idx} value={s}>{s}</option>))}
                   </select>
                 </div>
-
                 <div className="space-y-2">
                   <label className="block text-sm font-bold text-gray-700">Dịch vụ</label>
-                  <select value={serviceIndex} onChange={(e) => setServiceIndex(Number(e.target.value))} className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:border-medical focus:ring-2 focus:ring-medical/20 focus:outline-none font-medium text-sm shadow-sm">
+                  <select value={serviceIndex} onChange={(e) => setServiceIndex(Number(e.target.value))} className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:border-medical outline-none text-sm font-medium">
                     {mockServices.map((srv, idx) => (<option key={idx} value={idx}>{srv.name} ({srv.price.toLocaleString('vi-VN')}đ)</option>))}
                   </select>
                 </div>
-
                 <div className="space-y-2">
-                  <label className="block text-sm font-bold text-gray-700">Phòng khám</label>
-                  <select value={room} onChange={(e) => setRoom(e.target.value)} className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:border-medical focus:ring-2 focus:ring-medical/20 focus:outline-none font-medium text-sm shadow-sm">
-                    {mockRooms.map((r, idx) => (<option key={idx} value={r}>{r}</option>))}
-                  </select>
-                </div>
-
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <label className="block text-sm font-bold text-gray-700">Chọn ngày khám</label>
-                  </div>
+                  <label className="block text-sm font-bold text-gray-700">Chọn ngày</label>
                   <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-none">
-                    {dates.map((d, idx) => {
-                      const isSelected = selectedDate === d.dateStr;
-                      return (
-                        <button key={idx} type="button" onClick={() => setSelectedDate(d.dateStr)} className={`flex flex-col items-center justify-center py-3 px-4 rounded-xl border min-w-[70px] transition-all shadow-xs ${isSelected ? 'bg-medical text-white border-medical' : 'bg-white text-gray-600 border-gray-200 hover:border-medical/40'}`}>
-                          <span className="text-[10px] font-semibold uppercase">{d.dayOfWeek}</span>
-                          <span className="text-sm font-bold mt-1">{d.label}</span>
-                        </button>
-                      );
-                    })}
+                    {dates.map((d, idx) => (
+                      <button key={idx} type="button" onClick={() => setSelectedDate(d.dateStr)} className={`flex flex-col items-center justify-center py-3 px-4 rounded-xl border min-w-[70px] transition-all ${selectedDate === d.dateStr ? 'bg-medical text-white border-medical' : 'bg-white text-gray-600 border-gray-200'}`}>
+                        <span className="text-[10px] font-semibold uppercase">{d.dayOfWeek}</span>
+                        <span className="text-sm font-bold mt-1">{d.label}</span>
+                      </button>
+                    ))}
                   </div>
                 </div>
-
                 <div className="space-y-2">
-                  <label className="block text-sm font-bold text-gray-700">Chọn khung giờ khám</label>
+                  <label className="block text-sm font-bold text-gray-700">Khung giờ</label>
                   <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                    {mockTimeSlots.map((ts, idx) => {
-                      const isSelected = selectedTimeSlot === ts;
-                      return (
-                        <button key={idx} type="button" onClick={() => setSelectedTimeSlot(ts)} className={`py-3 px-4 rounded-xl border text-sm font-bold text-center transition-all shadow-xs ${isSelected ? 'bg-medical text-white border-medical' : 'bg-white text-gray-600 border-gray-200 hover:border-medical/40'}`}>
-                          {ts}
-                        </button>
-                      );
-                    })}
+                    {mockTimeSlots.map((ts, idx) => (
+                      <button key={idx} type="button" onClick={() => setSelectedTimeSlot(ts)} className={`py-3 px-4 rounded-xl border text-sm font-bold ${selectedTimeSlot === ts ? 'bg-medical text-white border-medical' : 'bg-white text-gray-600 border-gray-200'}`}>
+                        {ts}
+                      </button>
+                    ))}
                   </div>
                 </div>
-
                 <div className="pt-4 border-t border-gray-100 flex justify-end">
-                  <button type="submit" className="flex items-center gap-2 bg-medical text-white font-bold px-6 py-3 rounded-xl hover:bg-radiant-dark transition-all shadow-md active:scale-[0.98]">
-                    <span>Tiếp tục</span>
-                    <ArrowRight size={18} />
-                  </button>
+                  <button type="submit" className="flex items-center gap-2 bg-medical text-white font-bold px-6 py-3 rounded-xl shadow-md">Tiếp tục <ArrowRight size={18} /></button>
                 </div>
               </form>
             )}
 
             {currentStep === 2 && (
               <form onSubmit={handleStep2Submit} className="space-y-6">
-                <h3 className="text-xl font-extrabold text-gray-900 border-b border-gray-100 pb-3">Nhập thông tin hồ sơ bệnh nhân</h3>
+                <h3 className="text-xl font-extrabold text-gray-900 border-b border-gray-100 pb-3">Thông tin bệnh nhân</h3>
                 <div className="space-y-2">
-                  <label className="block text-sm font-bold text-gray-700">Họ và tên bệnh nhân</label>
-                  <input type="text" value={patientName} onChange={(e) => setPatientName(e.target.value)} placeholder="Nhập họ và tên viết hoa có dấu" className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:border-medical focus:ring-2 focus:ring-medical/20 focus:outline-none font-bold text-sm shadow-sm" required />
+                  <label className="block text-sm font-bold text-gray-700">Họ và tên <span className="text-red-500">*</span></label>
+                  <input type="text" value={patientName} onChange={(e) => setPatientName(e.target.value)} placeholder="VD: Nguyễn Văn A" className={`w-full px-4 py-3 rounded-xl border border-gray-300 focus:border-medical outline-none text-sm font-bold shadow-sm ${patientName ? 'text-gray-900' : 'text-gray-400 placeholder:text-gray-400'}`} required />
                 </div>
                 <div className="space-y-2">
-                  <label className="block text-sm font-bold text-gray-700">Ngày tháng năm sinh</label>
-                  <input type="date" value={patientDob} onChange={(e) => setPatientDob(e.target.value)} className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:border-medical focus:ring-2 focus:ring-medical/20 focus:outline-none font-medium text-sm shadow-sm" required />
+                  <label className="block text-sm font-bold text-gray-700">Ngày sinh <span className="text-red-500">*</span></label>
+                  <input type="date" max={today} value={patientDob} onChange={(e) => setPatientDob(e.target.value)} className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:border-medical outline-none text-sm font-medium shadow-sm" required />
                 </div>
                 <div className="space-y-2">
-                  <label className="block text-sm font-bold text-gray-700">Giới tính</label>
-                  <div className="flex gap-4">
-                    <label className="flex items-center gap-2 cursor-pointer font-semibold text-sm">
-                      <input type="radio" name="gender" value="Nam" checked={patientGender === 'Nam'} onChange={() => setPatientGender('Nam')} className="text-medical focus:ring-medical h-4 w-4" /> <span>Nam</span>
-                    </label>
-                    <label className="flex items-center gap-2 cursor-pointer font-semibold text-sm">
-                      <input type="radio" name="gender" value="Nữ" checked={patientGender === 'Nữ'} onChange={() => setPatientGender('Nữ')} className="text-medical focus:ring-medical h-4 w-4" /> <span>Nữ</span>
-                    </label>
+                  <label className="block text-sm font-bold text-gray-700">Giới tính <span className="text-red-500">*</span></label>
+                  <div className="flex gap-6">
+                    <label className="flex items-center gap-2 cursor-pointer text-sm font-semibold"><input type="radio" name="gender" value="Nam" onChange={(e) => setPatientGender(e.target.value)} required /> Nam</label>
+                    <label className="flex items-center gap-2 cursor-pointer text-sm font-semibold"><input type="radio" name="gender" value="Nữ" onChange={(e) => setPatientGender(e.target.value)} required /> Nữ</label>
                   </div>
                 </div>
                 <div className="pt-4 border-t border-gray-100 flex justify-between">
-                  <button type="button" onClick={() => setCurrentStep(1)} className="px-6 py-3 border border-gray-300 text-gray-600 rounded-xl font-bold hover:bg-gray-50 transition-all text-sm">Quay lại</button>
-                  <button type="submit" className="flex items-center gap-2 bg-medical text-white font-bold px-6 py-3 rounded-xl hover:bg-radiant-dark transition-all shadow-md active:scale-[0.98] text-sm">
-                    <span>Tiếp tục</span>
-                    <ArrowRight size={16} />
-                  </button>
+                  <button type="button" onClick={() => setCurrentStep(1)} className="px-6 py-3 border border-gray-300 text-gray-600 rounded-xl font-bold hover:bg-gray-50 text-sm">Quay lại</button>
+                  <button type="submit" className="flex items-center gap-2 bg-medical text-white font-bold px-6 py-3 rounded-xl shadow-md text-sm">Tiếp tục <ArrowRight size={16} /></button>
                 </div>
               </form>
             )}
 
             {currentStep === 3 && (
               <div className="space-y-6">
-                <h3 className="text-xl font-extrabold text-gray-900 border-b border-gray-100 pb-3">Xác nhận thông tin đặt lịch</h3>
-                <div className="bg-radiant-light/50 rounded-2xl p-6 border border-radiant/20 space-y-4">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-                    <div><span className="text-gray-400 block font-semibold uppercase text-[10px]">Cơ sở y tế</span><span className="font-bold text-gray-800">{clinic.name}</span></div>
-                    <div><span className="text-gray-400 block font-semibold uppercase text-[10px]">Chuyên khoa / Dịch vụ</span><span className="font-bold text-gray-800">{specialty} - {selectedService.name}</span></div>
-                    <div><span className="text-gray-400 block font-semibold uppercase text-[10px]">Thời gian & Phòng khám</span><span className="font-bold text-gray-800">{selectedTimeSlot} | {selectedDate} ({room})</span></div>
-                    <div><span className="text-gray-400 block font-semibold uppercase text-[10px]">Thông tin bệnh nhân</span><span className="font-bold text-gray-800">{patientName} ({patientGender}) - NS: {new Date(patientDob).toLocaleDateString('vi-VN')}</span></div>
-                  </div>
-                  <div className="border-t border-radiant/20 pt-4 flex items-center justify-between font-bold">
-                    <span className="text-gray-700">Tổng chi phí khám:</span>
-                    <span className="text-radiant-dark text-xl">{selectedService.price.toLocaleString('vi-VN')}đ</span>
-                  </div>
+                <h3 className="text-xl font-extrabold text-gray-900 border-b border-gray-100 pb-3">Xác nhận</h3>
+                <div className="bg-gray-50 rounded-2xl p-6 border space-y-4">
+                  <p><strong>Cơ sở:</strong> {clinic.name}</p>
+                  <p><strong>Lịch hẹn:</strong> {selectedTimeSlot} ngày {selectedDate}</p>
+                  <p><strong>Bệnh nhân:</strong> {patientName}</p>
                 </div>
                 <div className="pt-4 border-t border-gray-100 flex justify-between">
-                  <button type="button" onClick={() => setCurrentStep(2)} className="px-6 py-3 border border-gray-300 text-gray-600 rounded-xl font-bold hover:bg-gray-50 transition-all text-sm">Quay lại</button>
-                  <button onClick={handleConfirm} className="flex items-center gap-2 bg-medical text-white font-bold px-6 py-3 rounded-xl hover:bg-radiant-dark transition-all shadow-md active:scale-[0.98] text-sm">
-                    <span>Tiếp tục thanh toán</span>
-                    <ArrowRight size={16} />
-                  </button>
+                  <button type="button" onClick={() => setCurrentStep(2)} className="px-6 py-3 border border-gray-300 text-gray-600 rounded-xl font-bold hover:bg-gray-50 text-sm">Quay lại</button>
+                  <button onClick={handleConfirm} className="flex items-center gap-2 bg-medical text-white font-bold px-6 py-3 rounded-xl shadow-md text-sm">Thanh toán <ArrowRight size={16} /></button>
                 </div>
               </div>
             )}

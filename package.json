@@ -1,0 +1,6 @@
+{
+  "dependencies": {
+    "react-hot-toast": "^2.6.0",
+    "react-otp-input": "^3.1.1"
+  }
+}

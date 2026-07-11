@@ -1,7 +1,7 @@
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useBooking } from '../../context/BookingContext';
-import { Phone, User, LogOut, ChevronDown } from 'lucide-react';
+import { Phone, User, LogOut } from 'lucide-react';
 
 export const Header: React.FC = () => {
   const { bookingState, logout } = useBooking();
@@ -11,9 +11,9 @@ export const Header: React.FC = () => {
 
   const handleAuthClick = () => {
     if (isLoggedIn) {
-      if (confirm('Bạn có muốn đăng xuất?')) {
+      if (confirm('Bạn có muốn đăng xuất tài khoản này?')) {
         logout();
-        navigate('/');
+        navigate('/'); // Điều hướng về trang chủ sau khi đăng xuất
       }
     } else {
       navigate('/login');
@@ -27,7 +27,6 @@ export const Header: React.FC = () => {
         {/* Left Logo */}
         <div className="flex items-center">
           <Link to="/" className="flex items-center gap-2">
-            {/* Logo placeholder - User can add logo.png here */}
             <div className="h-9 w-9 bg-logo text-white rounded-lg flex items-center justify-center font-bold text-lg shadow-sm">
               P
             </div>

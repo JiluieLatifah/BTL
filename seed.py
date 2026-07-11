@@ -60,13 +60,12 @@ def seed_data():
             "13:30 - 14:30", "14:30 - 15:30", "15:30 - 16:30"
         ]
 
-        # Phan bo khung gio kham cho ngay 2026-07-10 doi voi tat ca chuyen khoa
         for specialty in db_specialties:
             for time_range in frontend_time_slots:
                 slot = TimeSlot(
                     date="2026-07-10",
                     time_range=time_range,
-                    total_slots=5,
+                    total_slots=5,  
                     available_slots=5,
                     version=1,
                     specialty_id=specialty.id

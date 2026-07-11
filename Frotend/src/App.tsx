@@ -1,5 +1,6 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { Toaster } from 'react-hot-toast';
 import { BookingProvider } from './context/BookingContext';
 import { Home } from './pages/Home';
 import { Login } from './pages/Login';
@@ -12,6 +13,18 @@ import { TicketDetail } from './pages/TicketDetail';
 function App() {
   return (
     <BookingProvider>
+      <Toaster 
+        position="top-right" 
+        toastOptions={{
+          duration: 3000,
+          style: {
+            borderRadius: '12px',
+            background: '#ffffff',
+            color: '#333',
+          },
+        }} 
+      />
+      
       <Router>
         <Routes>
           <Route path="/" element={<Home />} />
@@ -21,7 +34,7 @@ function App() {
           <Route path="/payment" element={<Payment />} />
           <Route path="/momo-pay" element={<MoMoPay />} />
           <Route path="/ticket-detail" element={<TicketDetail />} />
-        </Routes>
+       </Routes>
       </Router>
     </BookingProvider>
   );

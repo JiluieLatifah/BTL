@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Search, CheckCircle, Building, Clock, TestTube, Video, Activity, Landmark } from 'lucide-react';
+import { Search, CheckCircle, Building, Clock, TestTube, Video, Activity, Landmark, MoreHorizontal } from 'lucide-react';
 import { Header } from '../components/layout/Header';
 import { Footer } from '../components/layout/Footer';
 
 export const Home: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
+  const [showOtherServices, setShowOtherServices] = useState(false);
   const navigate = useNavigate();
 
   const handleSearchSubmit = (e: React.FormEvent) => {
@@ -17,49 +18,12 @@ export const Home: React.FC = () => {
     }
   };
 
-  const services = [
-    {
-      title: "Đặt khám tại cơ sở",
-      desc: "Đặt lịch khám trực tiếp tại bệnh viện, phòng khám",
-      icon: <Building size={32} className="text-medical" />,
-      action: () => navigate('/clinics'),
-      highlight: true
-    },
-    {
-      title: "Đặt khám ngoài giờ",
-      desc: "Phù hợp cho người bận rộn, khám buổi tối hoặc cuối tuần",
-      icon: <Clock size={32} className="text-indigo-500" />,
-      action: () => alert('Tính năng đang được phát triển!'),
-      highlight: false
-    },
-    {
-      title: "Đặt lịch xét nghiệm",
-      desc: "Xét nghiệm máu, nước tiểu, chẩn đoán hình ảnh nhanh chóng",
-      icon: <TestTube size={32} className="text-amber-500" />,
-      action: () => alert('Tính năng đang được phát triển!'),
-      highlight: false
-    },
-    {
-      title: "Gọi video với bác sĩ",
-      desc: "Tư vấn sức khỏe từ xa tiện lợi ngay tại nhà",
-      icon: <Video size={32} className="text-rose-500" />,
-      action: () => alert('Tính năng đang được phát triển!'),
-      highlight: false
-    },
-    {
-      title: "Đặt khám chuyên khoa",
-      desc: "Khám trực tiếp với bác sĩ chuyên khoa đầu ngành",
-      icon: <Activity size={32} className="text-sky-500" />,
-      action: () => alert('Tính năng đang được phát triển!'),
-      highlight: false
-    },
-    {
-      title: "Khám doanh nghiệp",
-      desc: "Gói khám sức khỏe định kỳ cho công ty, doanh nghiệp",
-      icon: <Landmark size={32} className="text-teal-500" />,
-      action: () => alert('Tính năng đang được phát triển!'),
-      highlight: false
-    }
+  const secondaryServices = [
+    { title: "Đặt khám ngoài giờ", desc: "Khám buổi tối hoặc cuối tuần", icon: <Clock size={24} className="text-indigo-500" /> },
+    { title: "Đặt lịch xét nghiệm", desc: "Xét nghiệm máu, nước tiểu...", icon: <TestTube size={24} className="text-amber-500" /> },
+    { title: "Gọi video với bác sĩ", desc: "Tư vấn từ xa tại nhà", icon: <Video size={24} className="text-rose-500" /> },
+    { title: "Đặt khám chuyên khoa", desc: "Khám với chuyên gia", icon: <Activity size={24} className="text-sky-500" /> },
+    { title: "Khám doanh nghiệp", desc: "Gói khám sức khỏe định kỳ", icon: <Landmark size={24} className="text-teal-500" /> }
   ];
 
   return (
@@ -68,7 +32,6 @@ export const Home: React.FC = () => {
 
       {/* Hero Section */}
       <section className="relative bg-gradient-to-br from-pink-500 via-[#dc91a8] to-rose-600 text-white py-16 md:py-24 px-4 overflow-hidden">
-        {/* Background Decorative Circles */}
         <div className="absolute top-0 right-0 w-96 h-96 bg-white opacity-5 rounded-full blur-3xl transform translate-x-20 -translate-y-20"></div>
         <div className="absolute bottom-0 left-0 w-96 h-96 bg-[#dc91a8] opacity-15 rounded-full blur-3xl transform -translate-x-20 translate-y-20"></div>
 
@@ -77,12 +40,9 @@ export const Home: React.FC = () => {
             Kết nối Người Dân với Cơ sở &<br className="hidden md:inline" /> Dịch vụ Y tế hàng đầu
           </h1>
           
-          {/* Search Bar Form */}
           <form onSubmit={handleSearchSubmit} className="max-w-2xl mx-auto mb-10">
             <div className="flex items-center bg-white rounded-full p-2 shadow-xl border border-pink-200">
-              <div className="pl-4 text-gray-400">
-                <Search size={22} />
-              </div>
+              <div className="pl-4 text-gray-400"><Search size={22} /></div>
               <input
                 type="text"
                 value={searchQuery}
@@ -90,73 +50,68 @@ export const Home: React.FC = () => {
                 placeholder="Tìm bác sĩ, bệnh viện, chuyên khoa..."
                 className="w-full pl-3 pr-4 py-3 text-gray-800 font-medium focus:outline-none rounded-full"
               />
-              <button
-                type="submit"
-                className="bg-radiant text-white font-semibold px-6 md:px-8 py-3 rounded-full hover:bg-radiant-dark transition-all shadow-md shrink-0"
-              >
+              <button type="submit" className="bg-radiant text-white font-semibold px-6 md:px-8 py-3 rounded-full hover:bg-radiant-dark transition-all shadow-md shrink-0">
                 Tìm kiếm
               </button>
             </div>
           </form>
 
-          {/* Benefits Checkmarks */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 max-w-3xl mx-auto text-left border-t border-white/20 pt-8">
             <div className="flex items-start gap-3">
               <CheckCircle size={20} className="text-rose-200 shrink-0 mt-0.5" />
-              <p className="text-sm font-medium text-pink-100">
-                Đặt khám nhanh - Lấy số thứ tự trực tuyến - Tư vấn sức khỏe từ xa
-              </p>
+              <p className="text-sm font-medium text-pink-100">Đặt khám nhanh - Lấy số trực tuyến - Tư vấn từ xa</p>
             </div>
             <div className="flex items-start gap-3">
               <CheckCircle size={20} className="text-rose-200 shrink-0 mt-0.5" />
-              <p className="text-sm font-medium text-pink-100">
-                Đặt khám theo giờ - Đặt càng sớm để có thể có số thứ tự thấp nhất
-              </p>
+              <p className="text-sm font-medium text-pink-100">Đặt khám theo giờ - Ưu tiên số thứ tự thấp nhất</p>
             </div>
             <div className="flex items-start gap-3">
               <CheckCircle size={20} className="text-rose-200 shrink-0 mt-0.5" />
-              <p className="text-sm font-medium text-pink-100">
-                Được hoàn tiền khi hủy khám - Có cơ hội nhận ưu đãi hoàn tiền
-              </p>
+              <p className="text-sm font-medium text-pink-100">Hoàn tiền khi hủy khám - Nhận ưu đãi hoàn tiền</p>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Services Grid Section */}
+      {/* Services Section - GOM NHÓM */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
         <h2 className="text-2xl md:text-3xl font-bold text-gray-800 text-center mb-12">
           Dịch vụ đặt lịch y tế trực tuyến
         </h2>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-          {services.map((srv, idx) => (
-            <div
-              key={idx}
-              onClick={srv.action}
-              className={`group cursor-pointer bg-white rounded-2xl p-6 shadow-sm border transition-all duration-300 hover:shadow-lg hover:-translate-y-1 ${
-                srv.highlight
-                  ? 'border-radiant ring-2 ring-radiant/20'
-                  : 'border-gray-200 hover:border-radiant/50'
-              }`}
-            >
-              <div className="mb-5 p-3 w-fit bg-gray-50 rounded-xl group-hover:bg-radiant-light transition-colors">
-                {srv.icon}
-              </div>
-              <h3 className="text-lg font-bold text-gray-900 mb-2 flex items-center gap-2">
-                {srv.title}
-                {srv.highlight && (
-                  <span className="text-xs bg-radiant-light text-radiant-dark font-bold px-2 py-0.5 rounded-full">
-                    Khuyên dùng
-                  </span>
-                )}
-              </h3>
-              <p className="text-sm text-gray-500 leading-relaxed">
-                {srv.desc}
-              </p>
-            </div>
-          ))}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-8 max-w-4xl mx-auto">
+          {/* Card 1: Core */}
+          <div onClick={() => navigate('/clinics')} className="group cursor-pointer bg-white rounded-2xl p-6 shadow-sm border border-radiant ring-2 ring-radiant/20 transition-all hover:shadow-lg hover:-translate-y-1">
+            <div className="mb-5 p-3 w-fit bg-radiant-light rounded-xl"><Building size={32} className="text-medical" /></div>
+            <h3 className="text-lg font-bold text-gray-900 mb-2 flex items-center gap-2">
+              Đặt khám tại cơ sở 
+              <span className="text-xs bg-radiant-light text-radiant-dark font-bold px-2 py-0.5 rounded-full">Khuyên dùng</span>
+            </h3>
+            <p className="text-sm text-gray-500 leading-relaxed">Đặt lịch khám trực tiếp tại bệnh viện, phòng khám</p>
+          </div>
+
+          {/* Card 2: Gom nhóm */}
+          <div onClick={() => setShowOtherServices(!showOtherServices)} className={`group cursor-pointer bg-white rounded-2xl p-6 shadow-sm border border-gray-200 transition-all hover:shadow-lg hover:-translate-y-1 ${showOtherServices ? 'border-radiant' : 'hover:border-radiant/50'}`}>
+            <div className="mb-5 p-3 w-fit bg-gray-50 rounded-xl group-hover:bg-gray-100 transition-colors"><MoreHorizontal size={32} className="text-gray-500" /></div>
+            <h3 className="text-lg font-bold text-gray-900 mb-2">Dịch vụ y tế khác</h3>
+            <p className="text-sm text-gray-500 leading-relaxed">Đặt khám ngoài giờ, xét nghiệm, gọi video với bác sĩ...</p>
+          </div>
         </div>
+
+        {/* Danh sách dịch vụ phụ */}
+        {showOtherServices && (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mt-8 animate-in fade-in slide-in-from-top-4 duration-300">
+            {secondaryServices.map((srv, idx) => (
+              <div key={idx} onClick={() => alert('Tính năng đang phát triển!')} className="bg-white p-5 rounded-xl border border-gray-200 flex items-center gap-4 cursor-pointer hover:border-radiant transition-all hover:shadow-md">
+                {srv.icon}
+                <div>
+                  <h4 className="font-bold text-sm text-gray-800">{srv.title}</h4>
+                  <p className="text-xs text-gray-400 mt-1">{srv.desc}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
       </section>
 
       <Footer />
