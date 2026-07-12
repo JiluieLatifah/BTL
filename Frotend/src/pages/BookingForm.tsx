@@ -11,7 +11,6 @@ export const BookingForm: React.FC = () => {
   const navigate = useNavigate();
   const clinic = bookingState.selectedClinic;
 
-  // Lấy ngày hiện tại để làm giới hạn cho ngày sinh (YYYY-MM-DD)
   const today = new Date().toISOString().split('T')[0];
 
   useEffect(() => {
@@ -24,21 +23,31 @@ export const BookingForm: React.FC = () => {
 
   const [currentStep, setCurrentStep] = useState<1 | 2 | 3>(1);
 
-  // Logic tự động tạo 7 ngày bắt đầu từ hôm nay
-  const dates = Array.from({ length: 7 }, (_, i) => {
-    const d = new Date();
-    d.setDate(d.getDate() + i);
-    const label = `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}`;
-    const dateStr = `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}/${d.getFullYear()}`;
-    const dayNames = ['Chủ Nhật', 'Thứ 2', 'Thứ 3', 'Thứ 4', 'Thứ 5', 'Thứ 6', 'Thứ 7'];
-    const dayOfWeek = i === 0 ? 'Hôm nay' : dayNames[d.getDay()];
-    return { dayOfWeek, dateStr, label };
-  });
+  // Logic: Tạo danh sách ngày từ ngày mai đến 31/12 năm nay
+  const dates = (() => {
+    const list = [];
+    const now = new Date();
+    const endOfYear = new Date(now.getFullYear(), 11, 31);
+    
+    let d = new Date(now);
+    d.setDate(d.getDate() + 1); // Bắt đầu từ ngày mai
+
+    while (d <= endOfYear) {
+      const dayNames = ['Chủ Nhật', 'Thứ 2', 'Thứ 3', 'Thứ 4', 'Thứ 5', 'Thứ 6', 'Thứ 7'];
+      list.push({
+        dayOfWeek: dayNames[d.getDay()],
+        dateStr: d.toLocaleDateString('vi-GB'), // VD: 13/07/2026
+        label: `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}`
+      });
+      d.setDate(d.getDate() + 1);
+    }
+    return list;
+  })();
 
   const [specialty, setSpecialty] = useState(bookingState.specialty || mockSpecialties[0]);
-  const [serviceIndex, setServiceIndex] = useState(1);
-  const [room, setRoom] = useState(bookingState.room || mockRooms[1]);
-  const [selectedDate, setSelectedDate] = useState(new Date().toLocaleDateString('vi-GB'));
+  const [serviceIndex, setServiceIndex] = useState(0);
+  const [room, setRoom] = useState(bookingState.room || mockRooms[0]);
+  const [selectedDate, setSelectedDate] = useState(dates[0].dateStr);
   const [selectedTimeSlot, setSelectedTimeSlot] = useState(mockTimeSlots[0]);
 
   const [patientName, setPatientName] = useState('');
@@ -112,18 +121,21 @@ export const BookingForm: React.FC = () => {
             {currentStep === 1 && (
               <form onSubmit={handleStep1Submit} className="space-y-6">
                 <h3 className="text-xl font-extrabold text-gray-900 border-b border-gray-100 pb-3">Chọn thông tin khám</h3>
+                
                 <div className="space-y-2">
                   <label className="block text-sm font-bold text-gray-700">Chuyên khoa</label>
                   <select value={specialty} onChange={(e) => setSpecialty(e.target.value)} className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:border-medical outline-none text-sm font-medium">
                     {mockSpecialties.map((s, idx) => (<option key={idx} value={s}>{s}</option>))}
                   </select>
                 </div>
+
                 <div className="space-y-2">
                   <label className="block text-sm font-bold text-gray-700">Dịch vụ</label>
                   <select value={serviceIndex} onChange={(e) => setServiceIndex(Number(e.target.value))} className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:border-medical outline-none text-sm font-medium">
                     {mockServices.map((srv, idx) => (<option key={idx} value={idx}>{srv.name} ({srv.price.toLocaleString('vi-VN')}đ)</option>))}
                   </select>
                 </div>
+
                 <div className="space-y-2">
                   <label className="block text-sm font-bold text-gray-700">Chọn ngày</label>
                   <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-none">
@@ -135,6 +147,7 @@ export const BookingForm: React.FC = () => {
                     ))}
                   </div>
                 </div>
+
                 <div className="space-y-2">
                   <label className="block text-sm font-bold text-gray-700">Khung giờ</label>
                   <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
@@ -145,6 +158,7 @@ export const BookingForm: React.FC = () => {
                     ))}
                   </div>
                 </div>
+                
                 <div className="pt-4 border-t border-gray-100 flex justify-end">
                   <button type="submit" className="flex items-center gap-2 bg-medical text-white font-bold px-6 py-3 rounded-xl shadow-md">Tiếp tục <ArrowRight size={18} /></button>
                 </div>
@@ -156,7 +170,7 @@ export const BookingForm: React.FC = () => {
                 <h3 className="text-xl font-extrabold text-gray-900 border-b border-gray-100 pb-3">Thông tin bệnh nhân</h3>
                 <div className="space-y-2">
                   <label className="block text-sm font-bold text-gray-700">Họ và tên <span className="text-red-500">*</span></label>
-                  <input type="text" value={patientName} onChange={(e) => setPatientName(e.target.value)} placeholder="VD: Nguyễn Văn A" className={`w-full px-4 py-3 rounded-xl border border-gray-300 focus:border-medical outline-none text-sm font-bold shadow-sm ${patientName ? 'text-gray-900' : 'text-gray-400 placeholder:text-gray-400'}`} required />
+                  <input type="text" value={patientName} onChange={(e) => setPatientName(e.target.value)} placeholder="VD: Nguyễn Văn A" className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:border-medical outline-none text-sm font-bold shadow-sm" required />
                 </div>
                 <div className="space-y-2">
                   <label className="block text-sm font-bold text-gray-700">Ngày sinh <span className="text-red-500">*</span></label>

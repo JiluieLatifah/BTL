@@ -9,10 +9,12 @@ from typing import Generator
 from app.core.config import settings
 from app.core.database import engine, Base, get_db
 
+# Import các model
 from app.models.user import User 
 from app.models.hospital import Hospital
 from app.models.specialty import Specialty
 from app.models.time_slot import TimeSlot
+from app.models.review import Review # Nhớ tạo file này trong app/models/
 
 # Tự động tạo bảng vào database
 Base.metadata.create_all(bind=engine)
@@ -45,6 +47,11 @@ class BookingRequest(BaseModel):
     current_version: int
     price: int
 
+class ReviewRequest(BaseModel):
+    appointment_id: str
+    rating: int = Field(..., ge=1, le=5)
+    comment: str
+
 # Lưu trữ OTP tạm thời 
 MOCK_OTP_STORE = {}
 
@@ -64,40 +71,24 @@ def send_otp(request: OTPRequest):
         "debug_otp": otp_code  
     }
 
-# [API XÁC THỰC - LOGIC UPSERT]
 @app.post("/api/v1/auth/otp", summary="Xác thực OTP và Đăng nhập/Đăng ký")
 def verify_otp(request: OTPVerify, db: Session = Depends(get_db)):
-    # 1. Kiểm tra OTP
     if request.phone_number not in MOCK_OTP_STORE or MOCK_OTP_STORE[request.phone_number] != request.otp:
         raise HTTPException(status_code=400, detail="Mã OTP không chính xác.")
     
     del MOCK_OTP_STORE[request.phone_number]
     
-    # 2. Logic Kiểm tra người dùng
     user = db.query(User).filter(User.phone_number == request.phone_number).first()
     
     if not user:
-        # Nếu chưa tồn tại -> Đăng ký mới
         new_user = User(phone_number=request.phone_number)
         db.add(new_user)
         db.commit()
         db.refresh(new_user)
-        # Trả về is_new_user: True để Front-end hiển thị thông báo "Đăng ký thành công"
-        return {
-            "status": "Success", 
-            "is_new_user": True, 
-            "message": "Đăng ký tài khoản thành công!"
-        }
+        return {"status": "Success", "is_new_user": True, "message": "Đăng ký thành công!"}
     else:
-        # Nếu đã tồn tại -> Chào mừng trở lại
-        # Trả về is_new_user: False để Front-end hiển thị thông báo "Đăng nhập thành công"
-        return {
-            "status": "Success", 
-            "is_new_user": False, 
-            "message": "Chào mừng bạn trở lại!"
-        }
+        return {"status": "Success", "is_new_user": False, "message": "Chào mừng bạn trở lại!"}
 
-# [API ĐẶT LỊCH]
 @app.post("/api/v1/booking/create", summary="Đặt lịch khám bệnh")
 def create_booking(request: BookingRequest, db: Session = Depends(get_db)):
     slot = db.query(TimeSlot).filter(TimeSlot.id == request.time_slot_id).first()
@@ -105,7 +96,7 @@ def create_booking(request: BookingRequest, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="Không tìm thấy khung giờ.")
 
     if hasattr(slot, 'version') and slot.version != request.current_version:
-        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Lịch đã thay đổi, vui lòng tải lại.")
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Lịch đã thay đổi.")
 
     booked_slots = getattr(slot, 'So_Luong_Hien_Tai', getattr(slot, 'booked_slots', 0))
     max_slots = getattr(slot, 'So_Luong_Toi_Da', getattr(slot, 'max_slots', 5))
@@ -126,7 +117,18 @@ def create_booking(request: BookingRequest, db: Session = Depends(get_db)):
         "data": {"maPhieuKham": f"MED-{random.randint(10000000, 99999999)}"}
     }
 
-# [API HỦY LỊCH]
 @app.put("/api/v1/booking/cancel/{appointment_id}", summary="Hủy lịch khám")
 def cancel_booking(appointment_id: str):
     return {"status": "Success", "message": "Hủy lịch khám thành công."}
+
+# [API ĐÁNH GIÁ]
+@app.post("/api/v1/booking/review", summary="Gửi đánh giá dịch vụ")
+def create_review(request: ReviewRequest, db: Session = Depends(get_db)):
+    new_review = Review(
+        appointment_id=request.appointment_id,
+        rating=request.rating,
+        comment=request.comment
+    )
+    db.add(new_review)
+    db.commit()
+    return {"status": "Success", "message": "Cảm ơn bạn đã đóng góp ý kiến!"}
