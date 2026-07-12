@@ -1,11 +1,14 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useBooking } from '../../context/BookingContext';
-import { Phone, User, LogOut } from 'lucide-react';
+import { Phone, User, LogOut, Star } from 'lucide-react';
+import { ReviewModal } from './ReviewModal';
 
 export const Header: React.FC = () => {
   const { bookingState, logout } = useBooking();
   const navigate = useNavigate();
+  const [isReviewOpen, setIsReviewOpen] = useState(false);
+  
   const isLoggedIn = bookingState.user?.isLoggedIn;
   const phoneNumber = bookingState.user?.phoneNumber;
 
@@ -13,9 +16,19 @@ export const Header: React.FC = () => {
     if (isLoggedIn) {
       if (confirm('Bạn có muốn đăng xuất tài khoản này?')) {
         logout();
-        navigate('/'); // Điều hướng về trang chủ sau khi đăng xuất
+        navigate('/');
       }
     } else {
+      navigate('/login');
+    }
+  };
+
+  // Logic kiểm tra đăng nhập trước khi mở Modal đánh giá
+  const handleReviewClick = () => {
+    if (isLoggedIn) {
+      setIsReviewOpen(true);
+    } else {
+      alert('Vui lòng đăng nhập để thực hiện đánh giá dịch vụ!');
       navigate('/login');
     }
   };
@@ -54,6 +67,15 @@ export const Header: React.FC = () => {
             Tải ứng dụng
           </button>
           
+          {/* Nút Đánh giá với Logic kiểm tra đăng nhập */}
+          <button
+            onClick={handleReviewClick}
+            className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-gray-600 hover:text-medical transition-colors"
+          >
+            <Star size={16} />
+            <span>Đánh giá</span>
+          </button>
+          
           <button
             onClick={handleAuthClick}
             className="flex items-center gap-2 px-4 py-1.5 text-sm font-medium text-white bg-medical rounded-full hover:bg-medical-dark shadow-sm transition-all"
@@ -68,7 +90,6 @@ export const Header: React.FC = () => {
       {/* Main Navigation Bar */}
       <div className="bg-gray-50 border-t border-gray-100 py-3">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row items-center justify-between gap-4">
-          {/* Left Navigation Links */}
           <nav className="flex flex-wrap items-center justify-center gap-6 text-sm font-semibold text-gray-600">
             <Link to="/clinics" className="hover:text-medical transition-colors">Cơ sở y tế</Link>
             <a href="#" className="hover:text-medical transition-colors">Dịch vụ y tế</a>
@@ -78,7 +99,6 @@ export const Header: React.FC = () => {
             <a href="#" className="hover:text-medical transition-colors">Liên hệ hợp tác</a>
           </nav>
 
-          {/* Right Hotline Badge */}
           <a
             href="tel:19002115"
             className="flex items-center gap-2 bg-medical text-white font-bold px-5 py-2 rounded-full shadow-md hover:bg-medical-dark hover:scale-105 transition-all text-sm animate-pulse"
@@ -88,6 +108,13 @@ export const Header: React.FC = () => {
           </a>
         </div>
       </div>
+
+      {/* Modal Đánh giá */}
+      <ReviewModal 
+        isOpen={isReviewOpen} 
+        onClose={() => setIsReviewOpen(false)} 
+        appointmentId="GENERAL-FEEDBACK" 
+      />
     </header>
   );
 };
